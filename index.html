@@ -713,6 +713,26 @@ function renderResults() {
   });
   document.getElementById('constitutionList').innerHTML = listHtml;
 
+  // DEBUG: dump all raw answers and scores
+  let debugHtml = '<div style="margin-top:12px;background:#fff3cd;border-radius:8px;padding:12px;font-size:12px;font-family:monospace;display:block" id="debugPanel">';
+  debugHtml += '<b>调试信息</b><br>';
+  CONSTITUTION_DATA.forEach(c => {
+    const qs = getQuestions(c);
+    let raw = 0;
+    for (let i = 0; i < qs.length; i++) {
+      let v = answers[c.id + '-' + i];
+      if (v === undefined) v = '?';
+      raw += (typeof v === 'number') ? v : 0;
+    }
+    debugHtml += c.name + ': raw=' + raw + ' trans=' + scores[c.id].toFixed(2) + '<br>';
+  });
+  debugHtml += '</div>';
+  debugHtml += '<div style="margin-top:4px;background:#d4edda;border-radius:8px;padding:8px;font-size:11px;font-family:monospace" id="debugPanel2">平和质判定详情：' + 
+    'pingheScore=' + scores['pinghe'].toFixed(2) + 
+    ' otherScores=[' + CONSTITUTION_DATA.filter(c => c.id !== 'pinghe').map(c => scores[c.id].toFixed(1)).join(',') + ']' +
+    ' judgment=' + judgments['pinghe'] + '</div>';
+  document.getElementById('constDesc').insertAdjacentHTML('beforebegin', debugHtml);
+
   // Description for primary type
   const desc = CONST_DESCRIPTIONS[primaryType];
   document.getElementById('constDesc').innerHTML = '<h3>' + desc.title + '</h3><p>' + desc.desc + '</p>';
