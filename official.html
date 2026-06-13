@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>中医体质测评 - 王琦院士九种体质（正式版）</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #f5f0e8 0%, #e8ddd0 50%, #f0ebe3 100%);
+  min-height: 100vh;
+  color: #3d3226;
+  -webkit-tap-highlight-color: transparent;
+}
+.container { max-width: 500px; margin: 0 auto; padding: 0; min-height: 100vh; }
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, #8B4513, #A0522D);
+  color: #fff;
+  padding: 20px 24px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(139,69,19,0.2);
+}
+.header h1 { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
+.header .subtitle { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+/* Progress */
+.progress-wrap { padding: 16px 24px; background: #fff; border-bottom: 1px solid #e8ddd0; }
+.progress-bar-bg { height: 6px; background: #e8ddd0; border-radius: 3px; overflow: hidden; }
+.progress-bar-fg { height: 100%; background: linear-gradient(90deg, #8B4513, #D2691E); border-radius: 3px; transition: width 0.4s ease; }
+.progress-text { font-size: 13px; color: #8B4513; margin-top: 6px; text-align: right; }
+
+/* Pages */
+.page { display: none; padding: 20px 24px 100px; }
+.page.active { display: block; animation: fadeIn 0.35s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Start Page */
+.start-page { text-align: center; padding-top: 20px; }
+.start-logo {
+  width: 80px; height: 80px; margin: 0 auto 20px;
+  background: linear-gradient(135deg, #8B4513, #D2691E);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 40px; color: #fff; box-shadow: 0 4px 20px rgba(139,69,19,0.3);
+}
+.start-page h2 { font-size: 20px; margin-bottom: 8px; color: #8B4513; }
+.start-page .intro {
+  font-size: 14px; color: #6b5e4e; line-height: 1.8; margin-bottom: 20px;
+  text-align: left; background: #fff; padding: 16px 20px; border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+}
+
+/* Name input */
+.name-input-wrap { margin-bottom: 16px; }
+.name-input-wrap label { font-size: 15px; font-weight: 600; color: #5a4a3a; display: block; margin-bottom: 8px; }
+.name-input-wrap input {
+  width: 100%; padding: 12px 16px; border: 2px solid #d4c5b2; border-radius: 12px;
+  font-size: 16px; background: #fff; color: #3d3226; outline: none;
+  transition: border-color 0.2s; text-align: center;
+}
+.name-input-wrap input:focus { border-color: #8B4513; }
+.name-input-wrap .name-hint { font-size: 12px; color: #999; margin-top: 4px; }
+
+/* Gender select */
+.gender-select { margin: 20px 0; }
+.gender-select label { font-size: 15px; font-weight: 600; color: #5a4a3a; display: block; margin-bottom: 12px; }
+.gender-btns { display: flex; gap: 12px; justify-content: center; }
+.gender-btn {
+  flex: 1; padding: 14px; border: 2px solid #d4c5b2; border-radius: 12px;
+  background: #fff; font-size: 16px; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.gender-btn.selected { border-color: #8B4513; background: #fdf5e6; color: #8B4513; font-weight: 600; }
+.gender-btn .icon { font-size: 24px; }
+.btn {
+  display: inline-block; padding: 14px 48px; border: none; border-radius: 25px;
+  font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #8B4513, #A0522D);
+  color: #fff; box-shadow: 0 4px 14px rgba(139,69,19,0.3);
+}
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:disabled { opacity: 0.5; pointer-events: none; }
+
+/* Section */
+.section-title {
+  font-size: 18px; font-weight: 700; color: #8B4513; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-desc { font-size: 13px; color: #999; margin-bottom: 16px; }
+.question-card {
+  background: #fff; border-radius: 12px; padding: 16px 18px; margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04); border-left: 3px solid #d4c5b2;
+  transition: border-color 0.3s;
+}
+.question-card.answered { border-left-color: #8B4513; }
+.question-card .q-text { font-size: 15px; color: #3d3226; margin-bottom: 10px; line-height: 1.6; }
+.question-card .q-star { color: #c0392b; font-size: 12px; margin-left: 4px; }
+.options { display: flex; gap: 6px; justify-content: space-between; }
+.opt-btn {
+  flex: 1; text-align: center; padding: 8px 2px; border-radius: 20px;
+  border: 1.5px solid #e0d5c5; background: #faf7f2; font-size: 12px;
+  color: #8b7355; cursor: pointer; transition: all 0.2s; user-select: none;
+  line-height: 1.3;
+}
+.opt-btn.selected { border-color: #8B4513; background: #8B4513; color: #fff; font-weight: 600; }
+.opt-btn:active { transform: scale(0.95); }
+
+/* Nav */
+.nav-btns { display: flex; gap: 12px; margin-top: 20px; }
+.nav-btns .btn { flex: 1; text-align: center; }
+.btn-outline {
+  background: #fff; color: #8B4513; border: 2px solid #8B4513; border-radius: 25px;
+}
+
+/* Result Page */
+.result-page { padding-top: 10px; }
+.result-header {
+  text-align: center; background: #fff; border-radius: 16px;
+  padding: 28px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  margin-bottom: 20px;
+}
+.result-prim-type {
+  font-size: 32px; font-weight: 800; color: #8B4513; margin-bottom: 4px;
+}
+.result-prim-badge {
+  display: inline-block; padding: 4px 14px; border-radius: 12px;
+  font-size: 14px; font-weight: 600;
+}
+.badge-yes { background: #ffe0cc; color: #c0392b; }
+.badge-tend { background: #fff3cd; color: #856404; }
+.badge-no { background: #d4edda; color: #155724; }
+.result-detail { font-size: 14px; color: #6b5e4e; margin-top: 12px; line-height: 1.8; }
+
+/* Save status */
+.save-status {
+  text-align: center; padding: 10px; border-radius: 8px;
+  font-size: 13px; margin-bottom: 16px; font-weight: 500;
+}
+.save-status.saving { background: #fff3cd; color: #856404; }
+.save-status.saved { background: #d4edda; color: #155724; }
+.save-status.error { background: #f8d7da; color: #721c24; }
+
+.chart-wrap {
+  background: #fff; border-radius: 16px; padding: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 20px;
+}
+.chart-wrap h3 { font-size: 16px; color: #8B4513; margin-bottom: 8px; text-align: center; }
+
+.constitution-list { margin-bottom: 20px; }
+.const-item {
+  background: #fff; border-radius: 12px; padding: 14px 18px; margin-bottom: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04); display: flex; align-items: center;
+  justify-content: space-between;
+}
+.const-item .c-name { font-size: 15px; font-weight: 600; color: #3d3226; }
+.const-item .c-score { font-size: 14px; color: #8B4513; }
+.const-item .c-badge {
+  padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600;
+}
+.const-item.featured { border-left: 4px solid #8B4513; background: #fdf5e6; }
+
+.const-desc {
+  background: #fff; border-radius: 12px; padding: 18px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 80px;
+}
+.const-desc h3 { font-size: 16px; color: #8B4513; margin-bottom: 10px; }
+.const-desc p { font-size: 14px; color: #6b5e4e; line-height: 1.8; }
+
+.btn-restart { display: block; margin: 0 auto 40px; }
+.footer { text-align: center; padding: 20px; font-size: 12px; color: #bbb; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1>中医体质测评</h1>
+    <div class="subtitle">基于王琦院士九种体质分类标准</div>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap" style="display:none">
+    <div class="progress-bar-bg"><div class="progress-bar-fg" id="progressBar" style="width:0%"></div></div>
+    <div class="progress-text" id="progressText">0%</div>
+  </div>
+
+  <!-- ====== START PAGE ====== -->
+  <div class="page active" id="pageStart">
+    <div class="start-page">
+      <div class="start-logo">☯</div>
+      <h2>王琦院士 · 中医体质学</h2>
+      <div class="intro">
+        <p>本测评依据<b>王琦院士</b>提出的中医体质九分法，涵盖<b>平和质、气虚质、阳虚质、阴虚质、痰湿质、湿热质、血瘀质、特禀质、气郁质</b>九种体质类型。</p>
+        <p style="margin-top:10px">请根据您<b>近一年的体验和感觉</b>，如实回答每个问题。预计用时 <b>8~15分钟</b>。</p>
+      </div>
+      <div class="name-input-wrap">
+        <label>请输入您的姓名（或昵称）</label>
+        <input type="text" id="nameInput" placeholder="请输入姓名" maxlength="30" oninput="checkStartReady()">
+        <div class="name-hint">用于区分测评记录，请填写</div>
+      </div>
+      <div class="gender-select">
+        <label>请选择您的性别（湿热质部分题目因性别而异）</label>
+        <div class="gender-btns">
+          <div class="gender-btn" onclick="selectGender('male', this)">
+            <span class="icon">👨</span> 男性
+          </div>
+          <div class="gender-btn" onclick="selectGender('female', this)">
+            <span class="icon">👩</span> 女性
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="btnStart" disabled onclick="startTest()">
+        开始测评
+      </button>
+    </div>
+  </div>
+
+  <!-- ====== QUESTION PAGES ====== -->
+  <div class="page" id="pageQuestions"></div>
+
+  <!-- ====== RESULT PAGE ====== -->
+  <div class="page" id="pageResult">
+    <div class="result-page">
+      <div class="result-header" id="resultHeader"></div>
+      <div class="save-status saving" id="saveStatus">正在保存测评结果...</div>
+      <div class="chart-wrap">
+        <h3>九种体质转化分雷达图</h3>
+        <canvas id="radarChart" height="360"></canvas>
+      </div>
+      <div class="constitution-list" id="constitutionList"></div>
+      <div class="const-desc" id="constDesc"></div>
+      <button class="btn btn-outline btn-restart" onclick="restartTest()">重新测评</button>
+    </div>
+  </div>
+
+  <div class="footer">王琦院士 · 中医体质分类与判定标准</div>
+</div>
+
+<script>
+// ==================== DATA ====================
+const CONSTITUTION_DATA = [
+  {
+    id: 'pinghe', name: '平和质', emoji: '☯️', items: 8,
+    reverse: [2,3,4,5,7,8],
+    questions: [
+      '您精力充沛吗？',
+      '您容易疲乏吗？',
+      '您说话声音无力吗？',
+      '您感到闷闷不乐吗？',
+      '您比一般人耐受不了寒冷（冬天的寒冷，夏天的冷空调、电扇）吗？',
+      '您能适应外界自然和社会环境的变化吗？',
+      '您容易失眠吗？',
+      '您容易忘事（健忘）吗？'
+    ]
+  },
+  {
+    id: 'qixu', name: '气虚质', emoji: '😮‍💨', items: 8,
+    reverse: [],
+    questions: [
+      '您容易疲乏吗？',
+      '您容易气短（呼吸短促，接不上气）吗？',
+      '您容易心慌吗？',
+      '您容易头晕或站起时晕眩吗？',
+      '您比别人容易患感冒吗？',
+      '您喜欢安静、懒得说话吗？',
+      '您说话声音无力吗？',
+      '您活动量稍大就容易出虚汗吗？'
+    ]
+  },
+  {
+    id: 'yangxu', name: '阳虚质', emoji: '🥶', items: 7,
+    reverse: [],
+    questions: [
+      '您手脚发凉吗？',
+      '您胃脘部、背部或腰膝部怕冷吗？',
+      '您感到怕冷、衣服比别人穿得多吗？',
+      '您比一般人受不了寒冷（冬天的寒冷，夏天的冷空调、电扇等）吗？',
+      '您比别人容易患感冒吗？',
+      '您吃（喝）凉的东西会感到不舒服或者怕吃（喝）凉东西吗？',
+      '您受凉或吃（喝）凉的东西后，容易腹泻（拉肚子）吗？'
+    ]
+  },
+  {
+    id: 'yinxu', name: '阴虚质', emoji: '🔥', items: 8,
+    reverse: [],
+    questions: [
+      '您感到手脚心发热吗？',
+      '您感觉身体、脸上发热吗？',
+      '您皮肤或口唇干吗？',
+      '您口唇的颜色比一般人红吗？',
+      '您容易便秘或大便干燥吗？',
+      '您面部两侧潮红或偏红吗？',
+      '您感到眼睛干涩吗？',
+      '您感到口干咽燥，总想喝水吗？'
+    ]
+  },
+  {
+    id: 'tanshi', name: '痰湿质', emoji: '😶‍🌫️', items: 8,
+    reverse: [],
+    questions: [
+      '您感到胸闷或腹部胀满吗？',
+      '您感到身体沉重不轻松或不爽快吗？',
+      '您腹部肥满松软吗？',
+      '您有额部油脂分泌多的现象吗？',
+      '您上眼睑比别人肿（轻微隆起的现象）吗？',
+      '您嘴里有黏黏的感觉吗？',
+      '您平时痰多，特别是咽喉部总感到有痰堵着吗？',
+      '您舌苔厚腻或有舌苔厚厚的感觉吗？'
+    ]
+  },
+  {
+    id: 'shire', name: '湿热质', emoji: '💦', items: 6,
+    reverse: [],
+    genderQuestions: {
+      male: [
+        '您面部或鼻部有油腻感或者油亮发光吗？',
+        '您容易生痤疮或疮疖吗？',
+        '您感到口苦或嘴里有异味吗？',
+        '您大便黏滞不爽、有解不尽的感觉吗？',
+        '您小便时尿道有发热感、尿色浓（深）吗？',
+        '您的阴囊部位潮湿吗？'
+      ],
+      female: [
+        '您面部或鼻部有油腻感或者油亮发光吗？',
+        '您容易生痤疮或疮疖吗？',
+        '您感到口苦或嘴里有异味吗？',
+        '您大便黏滞不爽、有解不尽的感觉吗？',
+        '您小便时尿道有发热感、尿色浓（深）吗？',
+        '您带下色黄（白带颜色发黄）吗？'
+      ]
+    }
+  },
+  {
+    id: 'xueyu', name: '血瘀质', emoji: '🩸', items: 7,
+    reverse: [],
+    questions: [
+      '您的皮肤在不知不觉中会出现青紫瘀斑（皮下出血）吗？',
+      '您两颧部有细微红丝吗？',
+      '您身体上有哪里疼痛吗？',
+      '您面色晦暗或容易出现褐斑吗？',
+      '您容易有黑眼圈吗？',
+      '您容易忘事（健忘）吗？',
+      '您口唇颜色偏黯吗？'
+    ]
+  },
+  {
+    id: 'tebing', name: '特禀质', emoji: '🤧', items: 7,
+    reverse: [],
+    questions: [
+      '您没有感冒时也会打喷嚏吗？',
+      '您没有感冒时也会鼻塞、流鼻涕吗？',
+      '您有因季节变化、温度变化或异味等原因而咳喘的现象吗？',
+      '您容易过敏（对药物、食物、气味、花粉或在季节交替、气候变化时）吗？',
+      '您的皮肤容易起荨麻疹（风团、风疹块、风疙瘩）吗？',
+      '您因过敏出现过紫癜（紫红色瘀点、瘀斑）吗？',
+      '您的皮肤一抓就红，并出现抓痕吗？'
+    ]
+  },
+  {
+    id: 'qiyu', name: '气郁质', emoji: '😔', items: 7,
+    reverse: [],
+    questions: [
+      '您感到闷闷不乐吗？',
+      '您容易精神紧张、焦虑不安吗？',
+      '您多愁善感、感情脆弱吗？',
+      '您容易感到害怕或受到惊吓吗？',
+      '您胁肋部或乳房胀痛吗？',
+      '您无缘无故叹气吗？',
+      '您咽喉部有异物感，且吐之不出、咽之不下吗？'
+    ]
+  }
+];
+
+const OPTION_LABELS = ['没有', '很少', '有时', '经常', '总是'];
+const OPTION_SUB = ['根本不', '有一点', '有些', '相当', '非常'];
+
+const CONST_DESCRIPTIONS = {
+  pinghe: {
+    title: '平和质 — 阴阳调和，健康均衡',
+    desc: '平和质是最理想的体质状态，阴阳气血调和，体态适中，面色润泽，精力充沛。您对外界环境适应能力强，不易生病。建议保持规律作息、均衡饮食、适度运动，将这种健康状态延续下去。'
+  },
+  qixu: {
+    title: '气虚质 — 元气不足，易疲乏',
+    desc: '气虚质以气息低弱、脏腑功能状态低下为主要特征。常见疲乏、气短、自汗等表现。调养重点在于益气健脾，建议多吃山药、大枣、鸡肉等益气食物，避免过度劳累，选择太极拳、八段锦等柔缓运动。'
+  },
+  yangxu: {
+    title: '阳虚质 — 阳气不足，怕冷畏寒',
+    desc: '阳虚质以畏寒怕冷、手足不温为主要特征。阳气不足，温煦功能减退。调养关键在于温阳补气，建议多食羊肉、韭菜、生姜等温性食物，注意保暖，适当晒太阳，避免生冷寒凉食物。'
+  },
+  yinxu: {
+    title: '阴虚质 — 阴液亏少，口干咽燥',
+    desc: '阴虚质以阴液亏少、口燥咽干、手足心热为主要特征。阴不制阳，虚热内生。调养重在滋阴降火，建议多食银耳、百合、梨等滋阴食物，避免熬夜，少吃辛辣燥热食物，保持情绪稳定。'
+  },
+  tanshi: {
+    title: '痰湿质 — 痰湿凝聚，形体肥胖',
+    desc: '痰湿质以形体肥胖、腹部肥满、口黏苔腻为主要特征。水液代谢失常，痰湿内停。调养需要健脾利湿、化痰泄浊，建议饮食清淡，多吃冬瓜、薏米等利湿食物，加强运动，避免肥甘厚腻。'
+  },
+  shire: {
+    title: '湿热质 — 湿热内蕴，面垢油光',
+    desc: '湿热质以面垢油光、口苦口干、身重困倦为主要特征。湿热交蒸，阻滞气机。调养宜清热利湿，建议饮食清淡，多吃绿豆、苦瓜等清热利湿食物，忌辛辣油腻，保持皮肤清洁，避免潮湿环境。'
+  },
+  xueyu: {
+    title: '血瘀质 — 血行不畅，肤色晦暗',
+    desc: '血瘀质以肤色晦暗、舌质紫暗、易现瘀斑为主要特征。血液运行不畅，瘀滞于内。调养重在活血化瘀，建议多食山楂、黑豆、醋等活血食物，保持心情愉快，适当运动促进血液循环。'
+  },
+  tebing: {
+    title: '特禀质 — 先天失常，容易过敏',
+    desc: '特禀质以先天禀赋异常、过敏反应为主要特征。对外界适应能力差，易出现花粉过敏、食物过敏等。调养宜益气固表、养血消风，建议避免已知过敏原，饮食清淡，适当锻炼增强体质，季节交替时注意防护。'
+  },
+  qiyu: {
+    title: '气郁质 — 气机郁滞，神情抑郁',
+    desc: '气郁质以神情抑郁、忧虑脆弱、烦闷不乐为主要特征。长期情志不畅，气机郁滞。调养重在疏肝理气、调畅情志，建议多参加集体活动，培养兴趣爱好，饮食上可多食柑橘、玫瑰花茶等理气解郁食物。'
+  }
+};
+
+// Cloud function endpoint
+const CLOUD_FUNCTION_URL = 'https://icm-test-4g5aigl2251f70611-1443136240.ap-shanghai.app.tcloudbase.com/saveResult';
+
+// ==================== STATE ====================
+let userName = '';
+let userGender = null;
+let currentSection = 0;
+let answers = {};
+let answerSources = new Set();
+let scores = {};
+
+// ==================== FUNCTIONS ====================
+function checkStartReady() {
+  userName = document.getElementById('nameInput').value.trim();
+  const btn = document.getElementById('btnStart');
+  btn.disabled = !(userName && userGender);
+}
+
+function selectGender(g, el) {
+  userGender = g;
+  document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  checkStartReady();
+}
+
+function startTest() {
+  if (!userName || !userGender) return;
+  currentSection = 0;
+  answers = {};
+  answerSources = new Set();
+  scores = {};
+  duplicateMap = buildDuplicateMap();
+  firstAppearanceMap = buildFirstAppearanceMap();
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('pageStart').classList.remove('active');
+  renderSection();
+}
+
+function getQuestions(constitution) {
+  if (constitution.genderQuestions) {
+    return constitution.genderQuestions[userGender];
+  }
+  return constitution.questions;
+}
+
+function totalSections() { return CONSTITUTION_DATA.length; }
+
+function totalQuestions() {
+  let count = 0;
+  CONSTITUTION_DATA.forEach(c => { count += getQuestions(c).length; });
+  return count;
+}
+
+function answeredForSection(sectionIdx) {
+  const c = CONSTITUTION_DATA[sectionIdx];
+  const qs = getQuestions(c);
+  let count = 0;
+  for (let i = 0; i < qs.length; i++) {
+    if (answers[c.id + '-' + i] !== undefined) count++;
+  }
+  return count;
+}
+
+function allSectionAnswered(sectionIdx) {
+  return answeredForSection(sectionIdx) === getQuestions(CONSTITUTION_DATA[sectionIdx]).length;
+}
+
+function updateProgress() {
+  let totalAnswered = 0;
+  CONSTITUTION_DATA.forEach((c, idx) => { totalAnswered += answeredForSection(idx); });
+  const pct = Math.round((totalAnswered / totalQuestions()) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '%';
+}
+
+function renderSection() {
+  const c = CONSTITUTION_DATA[currentSection];
+  const qs = getQuestions(c);
+  const page = document.getElementById('pageQuestions');
+  page.classList.add('active');
+  updateProgress();
+
+  let html = '';
+  html += '<div class="section-title">第 ' + (currentSection+1) + '/' + totalSections() + ' 组</div>';
+  html += '<div class="section-desc">请根据近一年的体验和感觉，选择最符合您的选项</div>';
+
+  let visibleNum = 0;
+  for (let i = 0; i < qs.length; i++) {
+    const qText = qs[i];
+    if (firstAppearanceMap[qText] !== undefined && firstAppearanceMap[qText] < currentSection) {
+      continue;
+    }
+    visibleNum++;
+    const qNum = visibleNum;
+    const isStar = c.reverse.includes(i + 1);
+    const answered = answers[c.id + '-' + i] !== undefined;
+    const val = answers[c.id + '-' + i];
+    html += '<div class="question-card' + (answered ? ' answered' : '') + '" id="qcard-' + c.id + '-' + i + '">';
+    html += '<div class="q-text">' + qNum + '. ' + qText;
+    if (isStar) html += '<span class="q-star">※</span>';
+    html += '</div>';
+    html += '<div class="options">';
+    for (let j = 0; j < 5; j++) {
+      html += '<div class="opt-btn' + (val === j+1 ? ' selected' : '') + '" onclick="answerQuestion(\'' + c.id + '\',' + i + ',' + (j+1) + ')">';
+      html += OPTION_LABELS[j] + '<br><small>' + OPTION_SUB[j] + '</small>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+  }
+
+  html += '<div class="nav-btns">';
+  if (currentSection > 0) {
+    html += '<button class="btn btn-outline" onclick="prevSection()">← 上一组</button>';
+  }
+  if (currentSection < totalSections() - 1) {
+    html += '<button class="btn btn-primary" onclick="nextSection()"' + (allSectionAnswered(currentSection) ? '' : ' disabled') + ' id="btnNext">下一组 →</button>';
+  } else {
+    html += '<button class="btn btn-primary" onclick="submitTest()" ' + (allSectionAnswered(currentSection) ? '' : ' disabled') + ' id="btnSubmit">查看结果</button>';
+  }
+  html += '</div>';
+
+  page.innerHTML = html;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function buildDuplicateMap() {
+  const map = {};
+  CONSTITUTION_DATA.forEach(c => {
+    const qs = getQuestions(c);
+    qs.forEach((qText, qIdx) => {
+      if (!map[qText]) map[qText] = [];
+      map[qText].push({ typeId: c.id, qIdx: qIdx });
+    });
+  });
+  const dupMap = {};
+  Object.keys(map).forEach(text => {
+    if (map[text].length > 1) dupMap[text] = map[text];
+  });
+  return dupMap;
+}
+
+function buildFirstAppearanceMap() {
+  const map = {};
+  CONSTITUTION_DATA.forEach((c, sectionIdx) => {
+    const qs = getQuestions(c);
+    qs.forEach((qText) => {
+      if (!(qText in map)) {
+        map[qText] = sectionIdx;
+      }
+    });
+  });
+  return map;
+}
+
+let duplicateMap = {};
+let firstAppearanceMap = {};
+
+function answerQuestion(typeId, qIdx, value) {
+  const key = typeId + '-' + qIdx;
+  const currentText = getQuestions(CONSTITUTION_DATA.find(c => c.id === typeId))[qIdx];
+
+  answerSources.add(key);
+
+  const dupEntries = duplicateMap[currentText];
+  if (dupEntries) {
+    dupEntries.forEach(entry => {
+      const dupKey = entry.typeId + '-' + entry.qIdx;
+      answers[dupKey] = value;
+    });
+  } else {
+    answers[key] = value;
+  }
+
+  const card = document.getElementById('qcard-' + key);
+  if (card) card.classList.add('answered');
+  const opts = card.querySelectorAll('.opt-btn');
+  opts.forEach((o, j) => {
+    o.classList.toggle('selected', j + 1 === value);
+  });
+
+  updateProgress();
+
+  if (allSectionAnswered(currentSection)) {
+    const btn = document.getElementById('btnNext') || document.getElementById('btnSubmit');
+    if (btn) btn.disabled = false;
+  }
+}
+
+function nextSection() {
+  if (currentSection < totalSections() - 1) {
+    currentSection++;
+    renderSection();
+  }
+}
+
+function prevSection() {
+  if (currentSection > 0) {
+    currentSection--;
+    renderSection();
+  }
+}
+
+function calculateScores() {
+  scores = {};
+  CONSTITUTION_DATA.forEach(c => {
+    const qs = getQuestions(c);
+    let rawSum = 0;
+    for (let i = 0; i < qs.length; i++) {
+      let val = answers[c.id + '-' + i] || 1;
+      if (c.reverse.includes(i + 1)) {
+        val = 6 - val;
+      }
+      rawSum += val;
+    }
+    const itemCount = qs.length;
+    const transScore = ((rawSum - itemCount) / (itemCount * 4)) * 100;
+    scores[c.id] = Math.round(transScore * 100) / 100;
+  });
+}
+
+function judgeConstitution() {
+  const pingheScore = scores['pinghe'];
+  const otherScores = CONSTITUTION_DATA.filter(c => c.id !== 'pinghe').map(c => scores[c.id]);
+
+  let pingheResult = '否';
+  if (pingheScore >= 60) {
+    if (otherScores.every(s => s < 30)) {
+      pingheResult = '是';
+    } else if (otherScores.every(s => s < 40)) {
+      pingheResult = '基本是';
+    }
+  }
+
+  const results = {};
+  CONSTITUTION_DATA.forEach(c => {
+    if (c.id === 'pinghe') {
+      results[c.id] = pingheResult;
+    } else {
+      const s = scores[c.id];
+      if (s >= 40) results[c.id] = '是';
+      else if (s >= 30) results[c.id] = '倾向是';
+      else results[c.id] = '否';
+    }
+  });
+
+  return results;
+}
+
+function getResultBadge(result) {
+  if (result === '是') return '<span class="c-badge badge-yes">是</span>';
+  if (result === '基本是') return '<span class="c-badge badge-tend">基本是</span>';
+  if (result === '倾向是') return '<span class="c-badge badge-tend">倾向是</span>';
+  return '<span class="c-badge badge-no">否</span>';
+}
+
+function getResultBadgeClass(result) {
+  if (result === '是') return 'badge-yes';
+  if (result === '基本是' || result === '倾向是') return 'badge-tend';
+  return 'badge-no';
+}
+
+function renderResults() {
+  calculateScores();
+  const judgments = judgeConstitution();
+
+  let primaryType = 'pinghe';
+  let primaryVerdict = judgments['pinghe'];
+
+  if (judgments['pinghe'] === '否') {
+    let maxScore = -Infinity;
+    CONSTITUTION_DATA.forEach(c => {
+      if (c.id !== 'pinghe' && scores[c.id] > maxScore) {
+        maxScore = scores[c.id];
+        primaryType = c.id;
+      }
+    });
+    primaryVerdict = judgments[primaryType];
+  }
+
+  const primConst = CONSTITUTION_DATA.find(c => c.id === primaryType);
+  const primName = primaryType === 'pinghe' ? '平和质' : primConst.name;
+
+  let headerHtml = '';
+  headerHtml += '<div class="result-prim-type">' + (primaryType === 'pinghe' ? '☯️ ' : primConst.emoji + ' ') + primName + '</div>';
+  if (primaryType === 'pinghe' && primaryVerdict === '是') {
+    headerHtml += '<div style="margin-top:6px"><span class="result-prim-badge badge-no" style="font-size:18px;padding:6px 20px">您是平和质</span></div>';
+    headerHtml += '<div class="result-detail">恭喜！您的体质阴阳调和，属于最理想的平和质。<br>请继续保持良好的生活习惯。</div>';
+  } else if (primaryType === 'pinghe' && primaryVerdict === '基本是') {
+    headerHtml += '<div style="margin-top:6px"><span class="result-prim-badge badge-tend" style="font-size:18px;padding:6px 20px">基本是平和质</span></div>';
+    headerHtml += '<div class="result-detail">您基本属于平和质，但有些方面稍有偏颇倾向。<br>建议适当关注偏颇指标较高的方面。</div>';
+  } else {
+    const badgeCls = getResultBadgeClass(primaryVerdict);
+    const label = primaryVerdict === '是' ? '您属于' + primName : '倾向' + primName;
+    headerHtml += '<div style="margin-top:6px"><span class="result-prim-badge ' + badgeCls + '" style="font-size:18px;padding:6px 20px">' + label + '</span></div>';
+    headerHtml += '<div class="result-detail">您的体质以<b>' + primName + '</b>为主要特征。<br>下方可查看九种体质的详细得分和建议。</div>';
+  }
+  document.getElementById('resultHeader').innerHTML = headerHtml;
+
+  let listHtml = '';
+  CONSTITUTION_DATA.forEach(c => {
+    const result = judgments[c.id];
+    const isPrimary = (c.id === primaryType);
+    listHtml += '<div class="const-item' + (isPrimary ? ' featured' : '') + '">';
+    listHtml += '<div><span class="c-name">' + c.emoji + ' ' + c.name + '</span></div>';
+    listHtml += '<div style="display:flex;align-items:center;gap:10px">';
+    listHtml += '<span class="c-score">' + scores[c.id].toFixed(1) + ' 分</span>';
+    listHtml += getResultBadge(result);
+    listHtml += '</div></div>';
+  });
+  document.getElementById('constitutionList').innerHTML = listHtml;
+
+  const desc = CONST_DESCRIPTIONS[primaryType];
+  document.getElementById('constDesc').innerHTML = '<h3>' + desc.title + '</h3><p>' + desc.desc + '</p>';
+
+  renderRadarChart();
+
+  document.getElementById('pageQuestions').classList.remove('active');
+  document.getElementById('pageResult').classList.add('active');
+  document.getElementById('progressWrap').style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Save to cloud
+  saveToCloud(judgments, primaryType);
+}
+
+function saveToCloud(judgments, primaryType) {
+  const statusEl = document.getElementById('saveStatus');
+  statusEl.className = 'save-status saving';
+  statusEl.textContent = '正在保存测评记录...';
+
+  // Build data payload
+  const data = {
+    name: userName,
+    gender: userGender,
+    primaryType: primaryType,
+    primaryJudgment: judgments[primaryType],
+    submitTime: new Date().toISOString(),
+    scores: {},
+    judgments: {}
+  };
+
+  CONSTITUTION_DATA.forEach(c => {
+    data.scores[c.id] = scores[c.id];
+    data.judgments[c.id] = judgments[c.id];
+  });
+
+  fetch(CLOUD_FUNCTION_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(result) {
+    if (result.success) {
+      statusEl.className = 'save-status saved';
+      statusEl.textContent = '✓ ' + userName + '，您的测评结果已保存';
+    } else {
+      statusEl.className = 'save-status error';
+      statusEl.textContent = '⚠ 保存失败：' + (result.message || '网络异常') + '（不影响查看结果）';
+    }
+  })
+  .catch(function(err) {
+    statusEl.className = 'save-status error';
+    statusEl.textContent = '⚠ 保存失败：网络连接异常（不影响查看结果）';
+  });
+
+  // Auto-hide status after 5 seconds on success
+  setTimeout(function() {
+    if (statusEl.className.indexOf('saved') >= 0) {
+      statusEl.style.opacity = '0';
+      statusEl.style.transition = 'opacity 0.5s';
+      setTimeout(function() { statusEl.style.display = 'none'; }, 500);
+    }
+  }, 5000);
+}
+
+function renderRadarChart() {
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  if (window._radarChart) window._radarChart.destroy();
+
+  const labels = CONSTITUTION_DATA.map(c => c.emoji + ' ' + c.name);
+  const data = CONSTITUTION_DATA.map(c => scores[c.id]);
+
+  window._radarChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: '转化分',
+        data: data,
+        backgroundColor: 'rgba(139, 69, 19, 0.15)',
+        borderColor: 'rgba(139, 69, 19, 0.9)',
+        borderWidth: 2,
+        pointBackgroundColor: data.map(s => s >= 40 ? '#c0392b' : s >= 30 ? '#e67e22' : '#7f8c8d'),
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          beginAtZero: true, max: 100, min: 0,
+          ticks: { stepSize: 20, backdropColor: 'transparent', font: { size: 10 }, callback: function(v) { return v === 0 ? '' : v; } },
+          pointLabels: { font: { size: 13, family: '-apple-system, "PingFang SC", "Microsoft YaHei", sans-serif' }, color: '#3d3226' },
+          grid: { color: 'rgba(139,69,19,0.1)' },
+          angleLines: { color: 'rgba(139,69,19,0.15)' }
+        }
+      }
+    }
+  });
+}
+
+function submitTest() {
+  if (!allSectionAnswered(currentSection)) return;
+  renderResults();
+}
+
+function restartTest() {
+  userName = '';
+  userGender = null;
+  currentSection = 0;
+  answers = {};
+  answerSources = new Set();
+  scores = {};
+  duplicateMap = {};
+  firstAppearanceMap = {};
+  document.getElementById('nameInput').value = '';
+  document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('btnStart').disabled = true;
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('pageResult').classList.remove('active');
+  document.getElementById('pageStart').classList.add('active');
+  document.getElementById('pageQuestions').classList.remove('active');
+  document.getElementById('saveStatus').style.display = 'block';
+  document.getElementById('saveStatus').style.opacity = '1';
+  document.getElementById('saveStatus').className = 'save-status saving';
+  document.getElementById('saveStatus').textContent = '正在保存测评结果...';
+}
+</script>
+</body>
+</html>
