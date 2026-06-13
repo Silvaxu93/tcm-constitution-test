@@ -203,6 +203,10 @@ body {
         <input type="text" id="nameInput" placeholder="请输入姓名" maxlength="30" oninput="checkStartReady()">
         <div class="name-hint">用于区分测评记录，请填写</div>
       </div>
+      <div class="name-input-wrap">
+        <label>请输入您的年龄</label>
+        <input type="number" id="ageInput" placeholder="年龄" min="1" max="120" oninput="checkStartReady()">
+      </div>
       <div class="gender-select">
         <label>请选择您的性别（湿热质部分题目因性别而异）</label>
         <div class="gender-btns">
@@ -423,6 +427,7 @@ const CLOUD_FUNCTION_URL = 'https://icm-test-4g5aigl2251f70611-1443136240.ap-sha
 
 // ==================== STATE ====================
 let userName = '';
+let userAge = null;
 let userGender = null;
 let currentSection = 0;
 let answers = {};
@@ -432,8 +437,10 @@ let scores = {};
 // ==================== FUNCTIONS ====================
 function checkStartReady() {
   userName = document.getElementById('nameInput').value.trim();
+  const ageVal = document.getElementById('ageInput').value.trim();
+  userAge = ageVal ? parseInt(ageVal) : null;
   const btn = document.getElementById('btnStart');
-  btn.disabled = !(userName && userGender);
+  btn.disabled = !(userName && userGender && userAge && userAge >= 1 && userAge <= 120);
 }
 
 function selectGender(g, el) {
@@ -444,7 +451,7 @@ function selectGender(g, el) {
 }
 
 function startTest() {
-  if (!userName || !userGender) return;
+  if (!userName || !userGender || !userAge) return;
   currentSection = 0;
   answers = {};
   answerSources = new Set();
@@ -751,6 +758,7 @@ function saveToCloud(judgments, primaryType) {
   // Build data payload
   const data = {
     name: userName,
+    age: userAge,
     gender: userGender,
     primaryType: primaryType,
     primaryJudgment: judgments[primaryType],
@@ -842,6 +850,7 @@ function submitTest() {
 
 function restartTest() {
   userName = '';
+  userAge = null;
   userGender = null;
   currentSection = 0;
   answers = {};
@@ -850,6 +859,7 @@ function restartTest() {
   duplicateMap = {};
   firstAppearanceMap = {};
   document.getElementById('nameInput').value = '';
+  document.getElementById('ageInput').value = '';
   document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('btnStart').disabled = true;
   document.getElementById('progressWrap').style.display = 'none';
