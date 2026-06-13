@@ -55,6 +55,13 @@ body {
 .gender-select { margin: 24px 0; }
 .gender-select label { font-size: 15px; font-weight: 600; color: #5a4a3a; display: block; margin-bottom: 12px; }
 .gender-btns { display: flex; gap: 12px; justify-content: center; }
+.age-input-wrap { margin: 16px 0; }
+.age-input-wrap label { font-size: 15px; font-weight: 600; color: #5a4a3a; display: block; margin-bottom: 8px; }
+.age-input-wrap input {
+  width: 120px; padding: 10px 14px; font-size: 16px; border: 2px solid #d4c5b2;
+  border-radius: 8px; text-align: center; outline: none; color: #3e2d21;
+}
+.age-input-wrap input:focus { border-color: #8B4513; }
 .gender-btn {
   flex: 1; padding: 14px; border: 2px solid #d4c5b2; border-radius: 12px;
   background: #fff; font-size: 16px; cursor: pointer; transition: all 0.2s;
@@ -189,6 +196,10 @@ body {
             <span class="icon">👩</span> 女性
           </div>
         </div>
+      </div>
+      <div class="age-input-wrap">
+        <label>请输入您的年龄</label>
+        <input type="number" id="ageInput" placeholder="年龄" min="1" max="120" oninput="checkStartReady()">
       </div>
       <button class="btn btn-primary" id="btnStart" disabled onclick="startTest()">
         开始测评
@@ -396,21 +407,28 @@ const CONST_DESCRIPTIONS = {
 
 // ==================== STATE ====================
 let userGender = null;
+let userAge = null;
 let currentSection = 0;
 let answers = {}; // { 'sectionId-questionIdx': value 1-5 }
 let answerSources = new Set(); // keys user manually clicked (not auto-propagated)
 let scores = {};  // computed transformed scores
 
 // ==================== FUNCTIONS ====================
+function checkStartReady() {
+  const ageVal = document.getElementById('ageInput').value.trim();
+  userAge = ageVal ? parseInt(ageVal) : null;
+  document.getElementById('btnStart').disabled = !(userGender && userAge && userAge >= 1 && userAge <= 120);
+}
+
 function selectGender(g, el) {
   userGender = g;
   document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
-  document.getElementById('btnStart').disabled = false;
+  checkStartReady();
 }
 
 function startTest() {
-  if (!userGender) return;
+  if (!userGender || !userAge) return;
   currentSection = 0;
   answers = {};
   answerSources = new Set();
@@ -793,12 +811,14 @@ function submitTest() {
 
 function restartTest() {
   userGender = null;
+  userAge = null;
   currentSection = 0;
   answers = {};
   answerSources = new Set();
   scores = {};
   duplicateMap = {};
   firstAppearanceMap = {};
+  document.getElementById('ageInput').value = '';
   document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('btnStart').disabled = true;
   document.getElementById('progressWrap').style.display = 'none';
